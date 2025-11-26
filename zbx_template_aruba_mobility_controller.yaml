@@ -1,0 +1,537 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 36bff6c29af64692839d077febfc7079
+      name: 'Templates/Network devices'
+  templates:
+    - uuid: 6305acd92c784c3db8b58cddead86776
+      template: 'Aruba Mobility Controller SNMP'
+      name: 'Aruba Mobility Controller SNMP'
+      description: |
+        Aruba Mobility Controller monitoring with SNMP MIB WLSX-WLAN-MIB
+        
+        https://mibbrowser.online/mibdb_search.php?mib=WLSX-WLAN-MIB
+      groups:
+        - name: 'Templates/Network devices'
+      items:
+        - uuid: 58b0493df7b240af9d5aa4a7c80c2cb7
+          name: 'Access Point Up'
+          type: SNMP_AGENT
+          snmp_oid: 'get[1.3.6.1.4.1.14823.2.2.1.5.2.1.1.0]'
+          key: ap.up
+          delay: '{$UPDATE_INTERVAL}'
+          history: 7d
+          description: 'Number of APs Currently Up'
+        - uuid: 0313b32908ff44578599d190e7cba1f2
+          name: 'Client Connected'
+          type: SNMP_AGENT
+          snmp_oid: 'get[1.3.6.1.4.1.14823.2.2.1.5.2.1.2.0]'
+          key: clients.up
+          delay: '{$UPDATE_INTERVAL}'
+          history: 7d
+          description: 'Number of Clients Currently Connected'
+        - uuid: 4cf661fcd0b44a71918a20c84c460259
+          name: 'SNMP Walk wlsxWlanAPChStatsTable'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.4.1.14823.2.2.1.5.3.1.6]'
+          key: snmp.walk.wlsxWlanAPChStatsTable
+          delay: '{$UPDATE_INTERVAL}'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+        - uuid: c846ef6cf3ab4d0e851693ae9d1fa42a
+          name: 'SNMP Walk wlsxWlanAPTable'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.4.1.14823.2.2.1.5.2.1.4]'
+          key: snmp.walk.wlsxWlanAPTable
+          delay: '{$UPDATE_INTERVAL}'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+        - uuid: cf23bd33541c45d28cf888a0b5cb81d9
+          name: 'SNMP Walk wlsxWlanRadioTable'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.4.1.14823.2.2.1.5.2.1.5]'
+          key: snmp.walk.wlsxWlanRadioTable
+          delay: '{$UPDATE_INTERVAL}'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+      discovery_rules:
+        - uuid: a18dcf8834a8461296ff221972dc5041
+          name: 'Discovery AP'
+          type: DEPENDENT
+          key: ap.discovery
+          delay: '0'
+          item_prototypes:
+            - uuid: e623d4cdc1c046af86400a99867e478e
+              name: 'AP "{#AP_NAME}": AP Group'
+              type: DEPENDENT
+              key: 'ap.apGroup[{#SNMPINDEX}]'
+              delay: '0'
+              history: 1h
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.4.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+              trigger_prototypes:
+                - uuid: 9eb84b705d414f8c81b7ffba09715054
+                  expression: 'change(/Aruba Mobility Controller SNMP/ap.apGroup[{#SNMPINDEX}])=1'
+                  name: 'AP "{#AP_NAME}": Group Changed'
+                  priority: INFO
+            - uuid: 6e5186f3aa6741129d748e766a201085
+              name: 'AP "{#AP_NAME}": IP'
+              type: DEPENDENT
+              key: 'ap.ip[{#SNMPINDEX}]'
+              delay: '0'
+              history: 1h
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.2.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+            - uuid: a9dbec735ac94b15bb122c7d19a75524
+              name: 'AP "{#AP_NAME}": Model Name'
+              type: DEPENDENT
+              key: 'ap.modelName[{#SNMPINDEX}]'
+              delay: '0'
+              history: 1h
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.13.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+            - uuid: 6741c05177164f4cafaf1fe2a43d85e3
+              name: 'AP "{#AP_NAME}": Total Reboot'
+              type: DEPENDENT
+              key: 'ap.numReboot[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.21.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+              trigger_prototypes:
+                - uuid: 68e5ae5c6b0f4ec799c15782bb9036ca
+                  expression: 'change(/Aruba Mobility Controller SNMP/ap.numReboot[{#SNMPINDEX}])=1'
+                  name: 'AP "{#AP_NAME}": Rebooted'
+                  priority: INFO
+            - uuid: 499ba92c34584d3589cc54b6e95669ec
+              name: 'AP "{#AP_NAME}": Radios'
+              type: DEPENDENT
+              key: 'ap.radios[{#SNMPINDEX}]'
+              delay: '0'
+              history: 1h
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.9.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+              trigger_prototypes:
+                - uuid: 69c36e9adc6c467a93e169e86f9fff89
+                  expression: 'change(/Aruba Mobility Controller SNMP/ap.radios[{#SNMPINDEX}])=1'
+                  name: 'AP "{#AP_NAME}": Number of Active Radios Changed'
+                  priority: INFO
+            - uuid: abf03991123e4ae089370ef2f1780ed3
+              name: 'AP "{#AP_NAME}": Serial'
+              type: DEPENDENT
+              key: 'ap.serial[{#SNMPINDEX}]'
+              delay: '0'
+              history: 1h
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.6.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+            - uuid: b50fc17db1e046428cdaf9c3d7bc9446
+              name: 'AP "{#AP_NAME}": Status'
+              type: DEPENDENT
+              key: 'ap.status[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              valuemap:
+                name: arubaapstatus
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.19.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+              trigger_prototypes:
+                - uuid: ff803e00e1e8490d82b640716dda0119
+                  expression: 'last(/Aruba Mobility Controller SNMP/ap.status[{#SNMPINDEX}])=2'
+                  name: 'AP "{#AP_NAME}": Offline'
+                  priority: AVERAGE
+            - uuid: ca8642198d574b6fbd48eb08794bdef9
+              name: 'AP "{#AP_NAME}": Uptime'
+              type: DEPENDENT
+              key: 'ap.uptime[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: uptime
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.12.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.01'
+              master_item:
+                key: snmp.walk.wlsxWlanAPTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+          master_item:
+            key: snmp.walk.wlsxWlanAPTable
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#AP_NAME}'
+                - 1.3.6.1.4.1.14823.2.2.1.5.2.1.4.1.3
+                - '0'
+        - uuid: b350023fe3c349edaf2c3f49593171e2
+          name: 'Discovery Radio'
+          type: DEPENDENT
+          key: radio.discovery
+          delay: '0'
+          item_prototypes:
+            - uuid: 281f0c937206402cbddb31a1eb1a0225
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Active BSSIDs'
+              type: DEPENDENT
+              key: 'radio.activeBSSID[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.9.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanRadioTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+              trigger_prototypes:
+                - uuid: 3207903403874905891271b9e02181c3
+                  expression: 'change(/Aruba Mobility Controller SNMP/radio.activeBSSID[{#SNMPINDEX}])=1'
+                  name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Number of Active BSSID Changed to "{ITEM.VALUE}"'
+                  priority: INFO
+            - uuid: 426af22a836348e5a71b10772cec1867
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Bandwidth Rate'
+              type: DEPENDENT
+              key: 'radio.bandwidthRate[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: bps
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.16.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '1000'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+            - uuid: acedaf8012b44ac784e822951f245f48
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Channel'
+              type: DEPENDENT
+              key: 'radio.channel[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.3.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanRadioTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+              trigger_prototypes:
+                - uuid: 51ede3de75244ac1b3eaac52446b946b
+                  expression: 'change(/Aruba Mobility Controller SNMP/radio.channel[{#SNMPINDEX}])=1'
+                  name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Channel Changed to "{ITEM.VALUE}"'
+                  priority: INFO
+            - uuid: bcaa611ba5f04bb2857b1db9041e9474
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Connected Clients'
+              type: DEPENDENT
+              key: 'radio.connectedClients[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.7.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanRadioTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+            - uuid: 01d85511e9df485a9c4c2f22604c8ba7
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Noise'
+              type: DEPENDENT
+              key: 'radio.noise[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              value_type: FLOAT
+              units: db
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.9.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '-1'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+            - uuid: 1068e93c2d1e4f87a84096be4c456a9c
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Non Unicast Packets'
+              type: DEPENDENT
+              key: 'radio.nonUnicastPck[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: '%'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.14.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+              trigger_prototypes:
+                - uuid: a598710019914b1eb69821ee0641f4b5
+                  expression: 'avg(/Aruba Mobility Controller SNMP/radio.nonUnicastPck[{#SNMPINDEX}],{$TRIGGER_RADIO_AVG_TIME})>{$TRIGGER_RADIO_NON_UNICAST}'
+                  name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Non Unicast is "{ITEM.VALUE}" of Total Traffic'
+                  priority: WARNING
+            - uuid: 80964bbb284841439b6a1141492cbf7a
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Rx Utilization'
+              type: DEPENDENT
+              key: 'radio.rxUtilization[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: '%'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.35.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+            - uuid: c752fbecfe2e45e2915cd47e2ee651d3
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Total Utilization'
+              type: DEPENDENT
+              key: 'radio.totalUtilization[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: '%'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.37.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+              trigger_prototypes:
+                - uuid: 0d3847c1c101407a946a9437d291e3a9
+                  expression: 'avg(/Aruba Mobility Controller SNMP/radio.totalUtilization[{#SNMPINDEX}],{$TRIGGER_RADIO_AVG_TIME})>{$TRIGGER_RADIO_UTILIZATION}'
+                  name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Utilization at "{ITEM.VALUE}" in last "{$TRIGGER_RADIO_AVG_TIME}"'
+                  priority: WARNING
+            - uuid: 3c9aa30591ef4562a7bcfd3085c4c830
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Tx Retries'
+              type: DEPENDENT
+              key: 'radio.txRetries[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: '%'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.11.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+              trigger_prototypes:
+                - uuid: b72b92855553422b804b4721c4e2ad5a
+                  expression: 'avg(/Aruba Mobility Controller SNMP/radio.txRetries[{#SNMPINDEX}],{$TRIGGER_RADIO_AVG_TIME})>{$TRIGGER_RADIO_RETRIES}'
+                  name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Tx Retries at "{ITEM.VALUE}" in last "{$TRIGGER_RADIO_AVG_TIME}"'
+                  priority: WARNING
+            - uuid: e2da12b0baed4bab91ca84f0fbb79aaa
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Tx Utilization'
+              type: DEPENDENT
+              key: 'radio.txUtilization[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              units: '%'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.3.1.6.1.36.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanAPChStatsTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+            - uuid: 141941eceffb4da5a6016e6e005b8edf
+              name: 'AP "{#AP_NAME}" Radio "{#RADIO_TYPE}": Type'
+              type: DEPENDENT
+              key: 'radio.type[{#SNMPINDEX}]'
+              delay: '0'
+              history: 7d
+              valuemap:
+                name: arubaphytype
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.2.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: snmp.walk.wlsxWlanRadioTable
+              tags:
+                - tag: 'AP Name'
+                  value: '{#AP_NAME}'
+                - tag: 'Radio Type'
+                  value: '{#RADIO_TYPE}'
+          master_item:
+            key: snmp.walk.wlsxWlanRadioTable
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#AP_NAME}'
+                - 1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.16
+                - '0'
+                - '{#RADIO_TYPE}'
+                - 1.3.6.1.4.1.14823.2.2.1.5.2.1.5.1.2
+                - '0'
+      macros:
+        - macro: '{$TRIGGER_RADIO_AVG_TIME}'
+          value: 3h
+          description: 'Trigger Radio Avg Time Frame'
+        - macro: '{$TRIGGER_RADIO_NON_UNICAST}'
+          value: '80'
+          description: 'Trigger Radio Non Unicast Traffic threshold in %'
+        - macro: '{$TRIGGER_RADIO_RETRIES}'
+          value: '25'
+          description: 'Trigger Radio Tx Retries threshold in %'
+        - macro: '{$TRIGGER_RADIO_UTILIZATION}'
+          value: '90'
+          description: 'Trigger Radio Utilization threshold in %'
+        - macro: '{$UPDATE_INTERVAL}'
+          value: 5m
+          description: 'Update Interval'
+      valuemaps:
+        - uuid: 9d73c4cbfcea412a8d1f22aae2e16276
+          name: arubaapstatus
+          mappings:
+            - value: '1'
+              newvalue: Up
+            - value: '2'
+              newvalue: Down
+            - value: '3'
+              newvalue: Testing
+        - uuid: 9af13686b6b24227bcb4522d2de68785
+          name: arubaphytype
+          mappings:
+            - value: '1'
+              newvalue: '802.11a (5 GHz)'
+            - value: '2'
+              newvalue: '802.11b (2.4 GHz)'
+            - value: '3'
+              newvalue: '802.11g (2.4 GHz)'
+            - value: '4'
+              newvalue: '802.11n (HT)'
+            - value: '5'
+              newvalue: '802.11ac (VHT)'
+            - value: '6'
+              newvalue: '802.11ax (Wi-Fi 6/6E)'
+            - value: '7'
+              newvalue: '802.11be (Wi-Fi 7)'
