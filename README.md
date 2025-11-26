@@ -22,7 +22,8 @@ This template is meant for monitoring Aruba Mobility Controller appliances using
 2) Create SNMP credentials on Aruba Mobility Controller.
 3) Create the Zabbix host with an SNMP interface and assign the ***Aruba Mobility Controller SNMP*** template.
 
-> [!TIP] You can personalize the Zabbix template behaviours using MACROS.
+> [!TIP]
+> You can personalize the Zabbix template behaviours using MACROS.
 
 ## Contribute
 
